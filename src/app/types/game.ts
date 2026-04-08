@@ -1,0 +1,110 @@
+export enum CharacterType {
+  DUKE = 'duke',
+  ASSASSIN = 'assassin',
+  CAPTAIN = 'captain',
+  AMBASSADOR = 'ambassador',
+  CONTESSA = 'contessa',
+  INQUISITOR = 'inquisitor',
+}
+
+export enum ActionType {
+  INCOME = 'income',
+  FOREIGN_AID = 'foreign_aid',
+  COUP = 'coup',
+  TAX = 'tax',
+  ASSASSINATE = 'assassinate',
+  STEAL = 'steal',
+  EXCHANGE = 'exchange',
+  INVESTIGATE = 'investigate',
+}
+
+export enum GamePhase {
+  LOBBY = 'lobby',
+  STARTING = 'starting',
+  ACTION = 'action',
+  RESPONSE = 'response',
+  CHALLENGE = 'challenge',
+  REVEAL = 'reveal',
+  ENDED = 'ended',
+}
+
+export enum ResponseType {
+  ALLOW = 'allow',
+  CHALLENGE = 'challenge',
+  BLOCK = 'block',
+}
+
+export interface Influence {
+  character: CharacterType;
+  revealed: boolean;
+}
+
+export interface Player {
+  id: string;
+  username: string;
+  coins: number;
+  influences: Influence[];
+  isAlive: boolean;
+  isHost: boolean;
+  isReady: boolean;
+  isConnected: boolean;
+}
+
+export interface ActionData {
+  type: ActionType;
+  actorId: string;
+  targetId?: string;
+  claimedCharacter?: CharacterType;
+  cost?: number;
+}
+
+export interface PendingAction {
+  action: ActionData;
+  timestamp: number;
+  respondedPlayers: string[];
+}
+
+export interface ChallengeData {
+  challengerId: string;
+  targetId: string;
+  claimedCharacter: CharacterType;
+}
+
+export interface BlockData {
+  blockerId: string;
+  claimedCharacter: CharacterType;
+}
+
+export interface GameState {
+  phase: GamePhase;
+  players: Player[];
+  currentPlayerId: string | null;
+  deck: CharacterType[];
+  treasury: number;
+  pendingAction: PendingAction | null;
+  pendingChallenge: ChallengeData | null;
+  pendingBlock: BlockData | null;
+  revealingPlayerId: string | null;
+  winner: Player | null;
+  includeInquisitor: boolean;
+}
+
+export interface RoomSettings {
+  maxPlayers: number;
+  includeInquisitor: boolean;
+}
+
+export interface Room {
+  code: string;
+  settings: RoomSettings;
+  players: Player[];
+  hostId: string;
+}
+
+export interface GameStats {
+  bluffs: number;
+  successfulChallenges: number;
+  failedChallenges: number;
+  coinsStolen: number;
+  assassinations: number;
+}

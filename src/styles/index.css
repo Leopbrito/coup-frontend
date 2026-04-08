@@ -1,0 +1,61 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Force dark theme for Coup game */
+body {
+  background: var(--coup-bg);
+  color: var(--coup-text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+  scroll-behavior: smooth;
+}
+
+/* Chrome, Edge, Safari */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.scroll-fade {
+  position: relative;
+}
+
+.scroll-fade::before,
+.scroll-fade::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scroll-fade::before {
+  top: 0;
+  background: linear-gradient(to bottom, #0D1016, transparent);
+}
+
+.scroll-fade::after {
+  bottom: 0;
+  background: linear-gradient(to top, #0D1016, transparent);
+}
