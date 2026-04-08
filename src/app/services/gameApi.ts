@@ -8,7 +8,7 @@
 import { Room, Player, RoomSettings } from '../types/game';
 
 // In Vite, environment variables are accessed via import.meta.env
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.PROD ? "https://api-coup.leopbrito.com/api" : "http://localhost:3000/api";
 
 export const gameApi = {
   // Room management
