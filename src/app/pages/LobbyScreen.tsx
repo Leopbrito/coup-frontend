@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, Copy, Play } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { PlayerBadge } from '../components/players/PlayerBadge';
 import { useGameStore } from '../store/gameStore';
@@ -10,14 +10,23 @@ import { ContentWrapper } from '../components/layout/ContentWrapper';
 import { Stack } from '../components/layout/Stack';
 import { Section } from '../components/layout/Section';
 
+import { gameApi } from '../services/gameApi';
+
 export function LobbyScreen() {
   const navigate = useNavigate();
-  const { roomCode, players, currentUserId, updatePlayer, initializeGame } = useGameStore();
+  const { roomCode, players, currentUserId, startGame } = useGameStore();
   const [copied, setCopied] = useState(false);
 
   const currentPlayer = players.find((p) => p.id === currentUserId);
   const isHost = currentPlayer?.isHost || false;
   const allReady = players.length >= 2 && players.every((p) => p.isReady || p.isHost);
+  const { phase } = useGameStore();
+
+  useEffect(() => {
+    if (phase === 'action' || phase === 'starting') {
+      navigate('/deal');
+    }
+  }, [phase, navigate]);
 
   const handleCopyCode = () => {
     if (roomCode) {
@@ -27,50 +36,30 @@ export function LobbyScreen() {
     }
   };
 
-  const handleToggleReady = () => {
-    if (currentUserId) {
+  const handleToggleReady = async () => {
+    if (currentUserId && roomCode) {
       const player = players.find((p) => p.id === currentUserId);
       if (player && !player.isHost) {
-        updatePlayer(currentUserId, { isReady: !player.isReady });
+        try {
+          await gameApi.updatePlayerReady(roomCode, currentUserId, !player.isReady);
+        } catch (e) {
+          console.error('Failed to toggle ready:', e);
+        }
       }
     }
   };
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     if (!isHost || !allReady) return;
 
-    // Initialize game with mock data
-    const mockPlayers: Player[] = [
-      ...players,
-      // Add AI players if needed for testing
-      ...(players.length < 3
-        ? [
-            {
-              id: 'ai-1',
-              username: 'AI Player 1',
-              coins: 2,
-              influences: [],
-              isAlive: true,
-              isHost: false,
-              isReady: true,
-              isConnected: true,
-            },
-            {
-              id: 'ai-2',
-              username: 'AI Player 2',
-              coins: 2,
-              influences: [],
-              isAlive: true,
-              isHost: false,
-              isReady: true,
-              isConnected: true,
-            },
-          ]
-        : []),
-    ];
-
-    initializeGame(mockPlayers, false);
-    navigate('/deal');
+    try {
+      await startGame();
+      // The store listener for game:started or stateUpdate will handle UI transitions
+      // or we can navigate if we want to follow the previous flow
+      navigate('/deal');
+    } catch (e) {
+      console.error('Failed to start game:', e);
+    }
   };
 
   return (

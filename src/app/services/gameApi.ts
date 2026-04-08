@@ -1,66 +1,67 @@
+/// <reference types="vite/client" />
+
 /**
  * Game API service for HTTP requests
- * This is a placeholder for REST API integration with backend
+ * Communicates with the NestJS backend
  */
 
 import { Room, Player, RoomSettings } from '../types/game';
 
-const API_BASE_URL = process.env.VITE_API_URL || '/api';
+// In Vite, environment variables are accessed via import.meta.env
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const gameApi = {
   // Room management
   async createRoom(hostPlayer: Player, settings: RoomSettings): Promise<Room> {
-    // TODO: Implement API call
-    console.log('[API] Creating room', { hostPlayer, settings });
-    
-    // Mock response
-    return {
-      code: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      settings,
-      players: [hostPlayer],
-      hostId: hostPlayer.id,
-    };
+    const response = await fetch(`${API_BASE_URL}/rooms`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hostPlayer, settings }),
+    });
+    if (!response.ok) throw new Error('Failed to create room');
+    return response.json();
   },
 
   async joinRoom(roomCode: string, player: Player): Promise<Room> {
-    // TODO: Implement API call
-    console.log('[API] Joining room', { roomCode, player });
-    
-    // Mock response
-    return {
-      code: roomCode,
-      settings: { maxPlayers: 6, includeInquisitor: false },
-      players: [player],
-      hostId: 'mock-host-id',
-    };
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomCode}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player }),
+    });
+    if (!response.ok) throw new Error('Failed to join room');
+    return response.json();
   },
 
   async leaveRoom(roomCode: string, playerId: string): Promise<void> {
-    // TODO: Implement API call
-    console.log('[API] Leaving room', { roomCode, playerId });
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomCode}/leave`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId }),
+    });
+    if (!response.ok) throw new Error('Failed to leave room');
   },
 
   async startGame(roomCode: string): Promise<void> {
-    // TODO: Implement API call
-    console.log('[API] Starting game', { roomCode });
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomCode}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error('Failed to start game');
   },
 
   async getRoomState(roomCode: string): Promise<Room> {
-    // TODO: Implement API call
-    console.log('[API] Getting room state', { roomCode });
-    
-    // Mock response
-    return {
-      code: roomCode,
-      settings: { maxPlayers: 6, includeInquisitor: false },
-      players: [],
-      hostId: 'mock-host-id',
-    };
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomCode}`);
+    if (!response.ok) throw new Error('Failed to get room state');
+    return response.json();
   },
 
   // Player actions
   async updatePlayerReady(roomCode: string, playerId: string, isReady: boolean): Promise<void> {
-    // TODO: Implement API call
-    console.log('[API] Updating player ready state', { roomCode, playerId, isReady });
+    const response = await fetch(`${API_BASE_URL}/rooms/${roomCode}/players/${playerId}/ready`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isReady }),
+    });
+    if (!response.ok) throw new Error('Failed to update player ready state');
   },
 };

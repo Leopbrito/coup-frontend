@@ -24,7 +24,6 @@ export function InitialDealScreen() {
     }, 2500);
 
     const continueTimer = setTimeout(() => {
-      startGame();
       navigate('/game');
     }, 5000);
 

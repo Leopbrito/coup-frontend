@@ -7,6 +7,7 @@ import { Player } from '../types/game';
 import { PageContainer } from '../components/layout/PageContainer';
 import { ContentWrapper } from '../components/layout/ContentWrapper';
 import { Stack } from '../components/layout/Stack';
+import { gameApi } from '../services/gameApi';
 
 export function CreateRoomScreen() {
   const navigate = useNavigate();
@@ -17,15 +18,14 @@ export function CreateRoomScreen() {
   const [roomCode, setRoomCode] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const { setRoomCode: setStoreRoomCode, setCurrentUserId, addPlayer } = useGameStore();
+  const { setRoomCode: setStoreRoomCode, setCurrentUserId, setPlayers } = useGameStore();
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!username.trim()) return;
 
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const userId = Math.random().toString(36).substring(2, 15);
 
-    const player: Player = {
+    const hostPlayer: Player = {
       id: userId,
       username: username.trim(),
       coins: 2,
@@ -36,16 +36,30 @@ export function CreateRoomScreen() {
       isConnected: true,
     };
 
-    setRoomCode(code);
-    setStoreRoomCode(code);
-    setCurrentUserId(userId);
-    addPlayer(player);
-    setRoomCreated(true);
+    try {
+      const room = await gameApi.createRoom(hostPlayer, {
+        maxPlayers,
+        includeInquisitor,
+      });
 
-    // Navigate to lobby after a short delay
-    setTimeout(() => {
-      navigate('/lobby');
-    }, 2000);
+      setRoomCode(room.code);
+      setStoreRoomCode(room.code);
+      setCurrentUserId(userId);
+      setPlayers(room.players);
+      
+      // Join the websocket room
+      const { socket } = await import('../services/socket');
+      socket.emit('room:join', { roomCode: room.code, player: hostPlayer });
+      
+      setRoomCreated(true);
+
+      // Navigate to lobby after a short delay
+      setTimeout(() => {
+        navigate('/lobby');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to create room:', error);
+    }
   };
 
   const handleCopyCode = () => {

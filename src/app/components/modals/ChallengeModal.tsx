@@ -10,6 +10,7 @@ interface ChallengeModalProps {
   claimedCharacter: CharacterType;
   currentPlayerId: string;
   canRespond: boolean;
+  canBeChallenged?: boolean;
   onAllow: () => void;
   onChallenge: () => void;
   onBlock?: () => void;
@@ -23,6 +24,7 @@ export function ChallengeModal({
   claimedCharacter,
   currentPlayerId,
   canRespond,
+  canBeChallenged = true,
   onAllow,
   onChallenge,
   onBlock,
@@ -173,20 +175,22 @@ export function ChallengeModal({
                 </motion.button>
 
                 {/* Challenge */}
-                <motion.button
-                  className="w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2"
-                  style={{
-                    background: 'var(--coup-accent-danger)',
-                    color: 'var(--coup-text-primary)',
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onChallenge}
-                >
-                  <XCircle className="w-5 h-5" />
-                  Challenge
-                </motion.button>
+                {(canBeChallenged ?? true) && (
+                  <motion.button
+                    className="w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2"
+                    style={{
+                      background: 'var(--coup-accent-danger)',
+                      color: 'var(--coup-text-primary)',
+                      fontFamily: 'var(--font-sans)',
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onChallenge}
+                  >
+                    <XCircle className="w-5 h-5" />
+                    Challenge
+                  </motion.button>
+                )}
 
                 {/* Block */}
                 {canBlock && onBlock && (

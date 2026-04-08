@@ -8,6 +8,8 @@ import { CoinCounter } from '../components/ui/CoinCounter';
 import { BottomSheet } from '../components/ui/BottomSheet';
 import { ActionButton } from '../components/game/ActionButton';
 import { ChallengeModal } from '../components/modals/ChallengeModal';
+import { ExchangeModal } from '../components/modals/ExchangeModal';
+import { InvestigateModal } from '../components/modals/InvestigateModal';
 import { ActionType, CharacterType, GamePhase } from '../types/game';
 import { ACTIONS } from '../constants/game';
 import { ArrowLeft } from 'lucide-react';
@@ -24,10 +26,16 @@ export function GameScreen() {
     currentPlayerId,
     currentUserId,
     pendingAction,
+    revealingPlayerId,
+    exchangeOptions,
+    pendingInvestigation,
+    treasury,
     winner,
     performAction,
     respondToAction,
     revealInfluence,
+    exchangeCards,
+    investigateDecision,
   } = useGameStore();
 
   // Navigate to end screen when game ends
@@ -41,12 +49,17 @@ export function GameScreen() {
 
   const [selectedAction, setSelectedAction] = useState<ActionType | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
-  const [showChallengeModal, setShowChallengeModal] = useState(false);
-  const [revealingCard, setRevealingCard] = useState(false);
 
   const currentPlayer = players.find((p) => p.id === currentUserId);
   const isMyTurn = currentPlayerId === currentUserId;
   const activePlayer = players.find((p) => p.id === currentPlayerId);
+
+  // Derived visibility
+  const hasResponded = pendingAction?.respondedPlayers.includes(currentUserId || '');
+  const showChallengeModal = phase === GamePhase.RESPONSE && !!pendingAction && (isMyTurn || !hasResponded);
+  const isRevealing = phase === GamePhase.REVEAL && revealingPlayerId === currentUserId;
+  const isExchanging = phase === GamePhase.EXCHANGE && revealingPlayerId === currentUserId;
+  const isInvestigating = phase === GamePhase.INVESTIGATE && revealingPlayerId === currentUserId;
 
   const availableActions = Object.values(ActionType).filter((action) => {
     const actionData = ACTIONS[action];
@@ -69,7 +82,6 @@ export function GameScreen() {
         claimedCharacter: actionData.requiredCharacter || undefined,
         cost: actionData.cost,
       });
-      setShowChallengeModal(true);
     }
   };
 
@@ -85,13 +97,23 @@ export function GameScreen() {
       cost: actionData.cost,
     });
     setSelectedAction(null);
-    setShowChallengeModal(true);
   };
 
   const handleRevealCard = (index: number) => {
     if (currentUserId) {
       revealInfluence(currentUserId, index);
-      setRevealingCard(false);
+    }
+  };
+
+  const handleExchangeConfirm = (keptCards: CharacterType[]) => {
+    if (currentUserId) {
+      exchangeCards(currentUserId, keptCards);
+    }
+  };
+
+  const handleInvestigateDecision = (forceExchange: boolean) => {
+    if (currentUserId) {
+      investigateDecision(currentUserId, forceExchange);
     }
   };
 
@@ -125,7 +147,7 @@ export function GameScreen() {
             <div className="text-xs uppercase tracking-wider text-coup-text-secondary/80 font-sans font-semibold">
               Treasury
             </div>
-            <CoinCounter count={50} size="medium" />
+            <CoinCounter count={treasury} size="medium" />
           </Stack>
         </Stack>
 
@@ -205,6 +227,70 @@ export function GameScreen() {
                     </p>
                   </motion.div>
                 )}
+
+                {/* Reveal Phase Overlay (Internal to Center Info for clean layout) */}
+                {phase === GamePhase.REVEAL && (
+                  <motion.div
+                    key="reveal-instruction"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="mt-8 p-6 rounded-2xl bg-coup-accent-danger/10 border border-coup-accent-danger/30 backdrop-blur-md"
+                  >
+                    {isRevealing ? (
+                      <>
+                        <h2 className="text-2xl mb-2 font-serif text-coup-accent-danger tracking-widest animate-pulse">
+                          SACRIFICE REQUIRED
+                        </h2>
+                        <p className="text-coup-text-primary font-sans text-sm">
+                          Select one of your influences to lose
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-xl mb-1 font-serif text-coup-text-primary/80">
+                          Influence Theft
+                        </h2>
+                        <p className="text-coup-text-secondary font-sans text-sm">
+                          {players.find(p => p.id === revealingPlayerId)?.username} is choosing a card to sacrifice...
+                        </p>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Exchange Phase Overlay */}
+                {phase === GamePhase.EXCHANGE && !isExchanging && (
+                  <motion.div
+                    key="exchange-waiting"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="mt-8 p-6 rounded-2xl bg-coup-primary/10 border border-coup-primary/30 backdrop-blur-md"
+                  >
+                    <h2 className="text-xl mb-1 font-serif text-coup-text-primary/80 uppercase tracking-widest">
+                      Bureaucracy
+                    </h2>
+                    <p className="text-coup-text-secondary font-sans text-sm">
+                      {players.find(p => p.id === revealingPlayerId)?.username} is exchanging influences...
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Investigate Phase Overlay */}
+                {phase === GamePhase.INVESTIGATE && !isInvestigating && (
+                  <motion.div
+                    key="investigate-waiting"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="mt-8 p-6 rounded-2xl bg-coup-primary/10 border border-coup-primary/30 backdrop-blur-md"
+                  >
+                    <h2 className="text-xl mb-1 font-serif text-coup-text-primary/80 uppercase tracking-widest">
+                      Interrogation
+                    </h2>
+                    <p className="text-coup-text-secondary font-sans text-sm">
+                      {players.find(p => p.id === revealingPlayerId)?.username} is investigating someone...
+                    </p>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           </div>
@@ -217,13 +303,25 @@ export function GameScreen() {
               </div>
               <Stack direction="horizontal" justify="center" gap="md">
                 {currentPlayer.influences.map((influence, index) => (
-                  <CharacterCard
+                  <motion.div
                     key={index}
-                    character={influence.character}
-                    revealed={influence.revealed}
-                    size="medium"
-                    onClick={revealingCard && !influence.revealed ? () => handleRevealCard(index) : undefined}
-                  />
+                    animate={isRevealing && !influence.revealed ? { 
+                      scale: [1, 1.05, 1],
+                      boxShadow: [
+                        '0 0 0 rgba(185, 58, 58, 0)',
+                        '0 0 15px rgba(185, 58, 58, 0.4)',
+                        '0 0 0 rgba(185, 58, 58, 0)'
+                      ] 
+                    } : {}}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <CharacterCard
+                      character={influence.character}
+                      revealed={influence.revealed}
+                      size="medium"
+                      onClick={isRevealing && !influence.revealed ? () => handleRevealCard(index) : undefined}
+                    />
+                  </motion.div>
                 ))}
               </Stack>
               <div className="flex justify-center mt-2">
@@ -262,20 +360,38 @@ export function GameScreen() {
           claimedCharacter={pendingAction.action.claimedCharacter || CharacterType.DUKE}
           currentPlayerId={currentUserId || ''}
           canRespond={currentUserId !== pendingAction.action.actorId}
+          canBeChallenged={ACTIONS[pendingAction.action.type].canBeChallenged}
           onAllow={() => {
             if (currentUserId) {
               respondToAction(currentUserId, 'allow');
-              setShowChallengeModal(false);
             }
           }}
           onChallenge={() => {
             if (currentUserId) {
               respondToAction(currentUserId, 'challenge');
-              setShowChallengeModal(false);
             }
           }}
         />
       )}
+
+      {/* Exchange Modal */}
+      {currentPlayer && (
+        <ExchangeModal
+          isOpen={isExchanging}
+          options={exchangeOptions || []}
+          currentInfluences={currentPlayer.influences.filter(i => !i.revealed).map(i => i.character)}
+          keepCount={currentPlayer.influences.filter(i => !i.revealed).length}
+          onConfirm={handleExchangeConfirm}
+        />
+      )}
+
+      {/* Investigate Modal */}
+      <InvestigateModal
+        isOpen={isInvestigating}
+        targetUsername={players.find(p => p.id === pendingInvestigation?.targetId)?.username || ''}
+        character={pendingInvestigation?.character || null}
+        onDecision={handleInvestigateDecision}
+      />
     </PageContainer>
   );
 }

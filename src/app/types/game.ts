@@ -25,6 +25,8 @@ export enum GamePhase {
   RESPONSE = 'response',
   CHALLENGE = 'challenge',
   REVEAL = 'reveal',
+  EXCHANGE = 'exchange',
+  INVESTIGATE = 'investigate',
   ENDED = 'ended',
 }
 
@@ -85,6 +87,8 @@ export interface GameState {
   pendingChallenge: ChallengeData | null;
   pendingBlock: BlockData | null;
   revealingPlayerId: string | null;
+  exchangeOptions: CharacterType[] | null;
+  pendingInvestigation: { targetId: string; cardIndex: number; character: CharacterType } | null;
   winner: Player | null;
   includeInquisitor: boolean;
 }

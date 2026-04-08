@@ -1,28 +1,31 @@
 import { create } from 'zustand';
 import { GameState, Player, GamePhase, ActionData, CharacterType, Influence } from '../types/game';
-import { createDeck, INITIAL_COINS, INFLUENCES_PER_PLAYER } from '../constants/game';
+import { socket } from '../services/socket';
+import { gameApi } from '../services/gameApi';
 
-interface GameStore extends GameState {
+export interface GameStore extends GameState {
   // Room management
   roomCode: string | null;
   currentUserId: string | null;
   setRoomCode: (code: string) => void;
   setCurrentUserId: (id: string) => void;
   
+  // Realtime Integration
+  connectSocket: (url: string) => void;
+  syncState: (newState: GameState) => void;
+
   // Game initialization
-  initializeGame: (players: Player[], includeInquisitor: boolean) => void;
-  startGame: () => void;
-  
-  // Player actions
-  addPlayer: (player: Player) => void;
-  removePlayer: (playerId: string) => void;
-  updatePlayer: (playerId: string, updates: Partial<Player>) => void;
+  initializeGame: (players: Player[], includeInquisitor: boolean) => Promise<void>;
+  startGame: () => Promise<void>;
   
   // Game actions
   performAction: (action: ActionData) => void;
   respondToAction: (playerId: string, response: 'allow' | 'challenge' | 'block', blockCharacter?: CharacterType) => void;
   revealInfluence: (playerId: string, influenceIndex: number) => void;
+  exchangeCards: (playerId: string, keptCards: CharacterType[]) => void;
+  investigateDecision: (playerId: string, forceExchange: boolean) => void;
   nextTurn: () => void;
+  setPlayers: (players: Player[]) => void;
   
   // Utility
   resetGame: () => void;
@@ -39,6 +42,8 @@ const initialState: GameState = {
   pendingChallenge: null,
   pendingBlock: null,
   revealingPlayerId: null,
+  exchangeOptions: null,
+  pendingInvestigation: null,
   winner: null,
   includeInquisitor: false,
 };
@@ -52,149 +57,75 @@ export const useRealGameStore = create<GameStore>((set, get) => ({
   
   setCurrentUserId: (id) => set({ currentUserId: id }),
 
-  initializeGame: (players, includeInquisitor) => {
-    const deck = createDeck(includeInquisitor);
-    const initializedPlayers = players.map((player) => {
-      const influences: Influence[] = [
-        { character: deck.pop()!, revealed: false },
-        { character: deck.pop()!, revealed: false },
-      ];
-      return {
-        ...player,
-        coins: INITIAL_COINS,
-        influences,
-        isAlive: true,
-      };
+  connectSocket: (url) => {
+    socket.connect(url);
+    
+    // Listen for state updates from the authoritative backend
+    socket.on('game:stateUpdate', (newState: GameState) => {
+      set({ ...newState });
     });
 
-    set({
-      phase: GamePhase.STARTING,
-      players: initializedPlayers,
-      deck,
-      currentPlayerId: initializedPlayers[0].id,
-      includeInquisitor,
+    socket.on('room:joined', (players: Player[]) => {
+      set({ players });
+    });
+
+    socket.on('game:started', () => {
+      // Just visually handled by StateUpdate, but could add UI flags if needed
     });
   },
 
-  startGame: () => {
-    set({ phase: GamePhase.ACTION });
+  syncState: (newState) => set(newState),
+
+  initializeGame: async (players, includeInquisitor) => {
+    // Actually uses API instead of generating locally
+    const roomCode = get().roomCode;
+    const currentUserId = get().currentUserId;
+    if (!roomCode || !currentUserId) return;
+    try {
+      const room = await gameApi.getRoomState(roomCode);
+      set({ players: room.players, includeInquisitor: room.settings.includeInquisitor });
+    } catch {
+      // ignore
+    }
   },
 
-  addPlayer: (player) => {
-    set((state) => ({
-      players: [...state.players, player],
-    }));
-  },
-
-  removePlayer: (playerId) => {
-    set((state) => ({
-      players: state.players.filter((p) => p.id !== playerId),
-    }));
-  },
-
-  updatePlayer: (playerId, updates) => {
-    set((state) => ({
-      players: state.players.map((p) =>
-        p.id === playerId ? { ...p, ...updates } : p
-      ),
-    }));
+  startGame: async () => {
+    const roomCode = get().roomCode;
+    if (!roomCode) return;
+    try {
+      await gameApi.startGame(roomCode);
+    } catch (e) {
+      console.error(e);
+    }
   },
 
   performAction: (action) => {
-    set({
-      pendingAction: {
-        action,
-        timestamp: Date.now(),
-        respondedPlayers: [action.actorId],
-      },
-      phase: GamePhase.RESPONSE,
-    });
+    socket.emit('game:action', action);
   },
 
   respondToAction: (playerId, response, blockCharacter) => {
-    const state = get();
-    
-    if (!state.pendingAction) return;
-
-    const respondedPlayers = [...state.pendingAction.respondedPlayers, playerId];
-
-    if (response === 'challenge') {
-      set({
-        pendingChallenge: {
-          challengerId: playerId,
-          targetId: state.pendingAction.action.actorId,
-          claimedCharacter: state.pendingAction.action.claimedCharacter!,
-        },
-        phase: GamePhase.CHALLENGE,
-      });
-    } else if (response === 'block' && blockCharacter) {
-      set({
-        pendingBlock: {
-          blockerId: playerId,
-          claimedCharacter: blockCharacter,
-        },
-        phase: GamePhase.RESPONSE,
-      });
-    } else if (response === 'allow') {
-      set((state) => ({
-        pendingAction: state.pendingAction
-          ? { ...state.pendingAction, respondedPlayers }
-          : null,
-      }));
-
-      // Check if all players have responded
-      const alivePlayers = state.players.filter(p => p.isAlive && p.id !== state.pendingAction?.action.actorId);
-      if (respondedPlayers.length > alivePlayers.length) {
-        // Execute action
-        get().nextTurn();
-      }
-    }
+    socket.emit('game:response', { playerId, response, blockCharacter });
   },
 
   revealInfluence: (playerId, influenceIndex) => {
-    set((state) => ({
-      players: state.players.map((p) => {
-        if (p.id === playerId) {
-          const newInfluences = [...p.influences];
-          newInfluences[influenceIndex] = {
-            ...newInfluences[influenceIndex],
-            revealed: true,
-          };
-          const isAlive = newInfluences.some((inf) => !inf.revealed);
-          return { ...p, influences: newInfluences, isAlive };
-        }
-        return p;
-      }),
-      revealingPlayerId: null,
-      phase: GamePhase.ACTION,
-    }));
+    socket.emit('game:reveal', { playerId, influenceIndex });
+  },
+  
+  exchangeCards: (playerId, keptCards) => {
+    const roomCode = get().roomCode;
+    socket.emit('game:exchange', { roomCode, playerId, keptCards });
+  },
 
-    // Check for winner
-    const alivePlayers = get().players.filter((p) => p.isAlive);
-    if (alivePlayers.length === 1) {
-      set({
-        winner: alivePlayers[0],
-        phase: GamePhase.ENDED,
-      });
-    } else {
-      get().nextTurn();
-    }
+  investigateDecision: (playerId, forceExchange) => {
+    const roomCode = get().roomCode;
+    socket.emit('game:investigateDecision', { roomCode, playerId, forceExchange });
   },
 
   nextTurn: () => {
-    const state = get();
-    const alivePlayers = state.players.filter((p) => p.isAlive);
-    const currentIndex = alivePlayers.findIndex((p) => p.id === state.currentPlayerId);
-    const nextIndex = (currentIndex + 1) % alivePlayers.length;
-
-    set({
-      currentPlayerId: alivePlayers[nextIndex].id,
-      pendingAction: null,
-      pendingChallenge: null,
-      pendingBlock: null,
-      phase: GamePhase.ACTION,
-    });
+    // Backend handles nextTurn internally based on responses
   },
+
+  setPlayers: (players) => set({ players }),
 
   getCurrentPlayer: () => {
     const state = get();

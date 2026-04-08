@@ -22,7 +22,10 @@ interface GameStore extends GameState {
   performAction: (action: ActionData) => void;
   respondToAction: (playerId: string, response: 'allow' | 'challenge' | 'block', blockCharacter?: CharacterType) => void;
   revealInfluence: (playerId: string, influenceIndex: number) => void;
+  exchangeCards: (playerId: string, keptCards: CharacterType[]) => void;
+  investigateDecision: (playerId: string, forceExchange: boolean) => void;
   nextTurn: () => void;
+  setPlayers: (players: Player[]) => void;
   
   // Utility
   resetGame: () => void;
@@ -39,6 +42,8 @@ const initialState: GameState = {
   pendingChallenge: null,
   pendingBlock: null,
   revealingPlayerId: null,
+  exchangeOptions: null,
+  pendingInvestigation: null,
   winner: null,
   includeInquisitor: false,
 };
@@ -187,6 +192,15 @@ export const useMockGameStore = create<GameStore & MockExtensions>((set, get) =>
     }
   },
 
+  exchangeCards: (playerId, keptCards) => {
+    // Mock implementation: just apply the changes and move on
+    get().revealInfluence(playerId, -1); // placeholder-ish
+  },
+
+  investigateDecision: (playerId, forceExchange) => {
+    get().nextTurn();
+  },
+  
   nextTurn: () => {
     const state = get();
     const alivePlayers = state.players.filter((p) => p.isAlive);
@@ -201,6 +215,8 @@ export const useMockGameStore = create<GameStore & MockExtensions>((set, get) =>
       phase: GamePhase.ACTION,
     });
   },
+
+  setPlayers: (players) => set({ players }),
 
   getCurrentPlayer: () => {
     const state = get();

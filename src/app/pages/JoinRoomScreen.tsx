@@ -8,14 +8,17 @@ import { PageContainer } from '../components/layout/PageContainer';
 import { ContentWrapper } from '../components/layout/ContentWrapper';
 import { Stack } from '../components/layout/Stack';
 
+import { gameApi } from '../services/gameApi';
+import { socket } from '../services/socket';
+
 export function JoinRoomScreen() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [roomCode, setRoomCode] = useState('');
 
-  const { setRoomCode: setStoreRoomCode, setCurrentUserId, addPlayer } = useGameStore();
+  const { setRoomCode: setStoreRoomCode, setCurrentUserId, setPlayers } = useGameStore();
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     if (!username.trim() || !roomCode.trim()) return;
 
     const userId = Math.random().toString(36).substring(2, 15);
@@ -31,11 +34,19 @@ export function JoinRoomScreen() {
       isConnected: true,
     };
 
-    setStoreRoomCode(roomCode.toUpperCase());
-    setCurrentUserId(userId);
-    addPlayer(player);
+    try {
+      const room = await gameApi.joinRoom(roomCode.toUpperCase(), player);
+      
+      setStoreRoomCode(roomCode.toUpperCase());
+      setCurrentUserId(userId);
+      setPlayers(room.players);
+      
+      socket.emit('room:join', { roomCode: roomCode.toUpperCase(), player });
 
-    navigate('/lobby');
+      navigate('/lobby');
+    } catch (error) {
+      console.error('Failed to join room:', error);
+    }
   };
 
   return (
