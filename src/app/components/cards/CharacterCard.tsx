@@ -33,103 +33,90 @@ export function CharacterCard({
   const Icon = characterIcons[character];
 
   const sizeClasses = {
-    small: 'w-20 h-28',
-    medium: 'w-28 h-40',
-    large: 'w-36 h-52',
+    small: 'w-24 h-36 border-[6px]',
+    medium: 'w-32 h-48 border-[8px]',
+    large: 'w-44 h-64 border-[10px]',
   };
 
-  if (faceDown) {
-    return (
-      <motion.div
-        className={`${sizeClasses[size]} rounded-lg ${className} cursor-pointer`}
-        style={{
-          background: 'var(--coup-card-back)',
-          border: '2px solid var(--coup-border)',
-        }}
-        whileHover={onClick ? { scale: 1.05, y: -4 } : {}}
-        whileTap={onClick ? { scale: 0.95 } : {}}
-        onClick={onClick}
-        initial={{ rotateY: 0 }}
-        animate={{ rotateY: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="w-full h-full flex items-center justify-center">
-          <div
-            className="w-16 h-20 rounded border-2 opacity-30"
-            style={{ borderColor: 'var(--coup-primary)' }}
-          />
-        </div>
-      </motion.div>
-    );
-  }
+  const isActuallyFaceDown = faceDown && !revealed;
 
   return (
-    <motion.div
-      className={`${sizeClasses[size]} rounded-lg overflow-hidden relative ${className} ${
-        onClick ? 'cursor-pointer' : ''
-      } ${revealed ? 'opacity-50 grayscale' : ''}`}
-      style={{
-        background: `linear-gradient(135deg, ${characterData.secondaryColor} 0%, ${characterData.color} 100%)`,
-        border: `2px solid ${characterData.color}`,
-        boxShadow: revealed ? 'none' : `0 4px 20px ${characterData.color}40`,
-      }}
-      whileHover={onClick && !revealed ? { scale: 1.05, y: -4 } : {}}
-      whileTap={onClick && !revealed ? { scale: 0.95 } : {}}
-      onClick={!revealed ? onClick : undefined}
-      initial={{ rotateY: 180 }}
-      animate={{ rotateY: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      {/* Ornate border pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-          <pattern id={`pattern-${character}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="currentColor" />
-          </pattern>
-          <rect width="100" height="100" fill={`url(#pattern-${character})`} />
-        </svg>
-      </div>
-
-      {/* Card content */}
-      <div className="relative h-full p-3 flex flex-col">
-        {/* Character icon */}
-        <div className="flex-1 flex items-center justify-center">
-          <Icon
-            className={`${size === 'large' ? 'w-16 h-16' : size === 'medium' ? 'w-12 h-12' : 'w-8 h-8'}`}
-            style={{ color: 'var(--coup-text-primary)' }}
-            strokeWidth={1.5}
-          />
-        </div>
-
-        {/* Character name */}
-        <div
-          className="text-center mt-auto"
+    <div className={`${sizeClasses[size].split(' ')[0]} ${sizeClasses[size].split(' ')[1]} perspective-1000 ${className}`}>
+      <motion.div
+        className="w-full h-full relative preserve-3d"
+        initial={false}
+        animate={{ rotateY: isActuallyFaceDown ? 180 : 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+      >
+        {/* Front Side (Face Up) */}
+        <div 
+          className="absolute inset-0 backface-hidden rounded-xl overflow-hidden shadow-2xl z-10"
           style={{
-            fontFamily: 'var(--font-serif)',
-            color: 'var(--coup-text-primary)',
+            background: `linear-gradient(135deg, ${characterData.secondaryColor} 0%, ${characterData.color} 100%)`,
+            border: `2px solid ${characterData.color}`,
+            boxShadow: revealed ? 'none' : `0 4px 25px ${characterData.color}60`,
           }}
         >
-          <div className={`${size === 'large' ? 'text-lg' : size === 'medium' ? 'text-base' : 'text-sm'} mb-1`}>
-            {characterData.name}
+          {/* Card Content */}
+          <div className={`relative h-full p-4 flex flex-col ${revealed ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+             <div className="absolute inset-0 opacity-10">
+                <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <pattern id={`pattern-${character}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="1" fill="currentColor" />
+                  </pattern>
+                  <rect width="100" height="100" fill={`url(#pattern-${character})`} />
+                </svg>
+              </div>
+
+              <div className="flex-1 flex items-center justify-center relative">
+                <Icon
+                  className={`${size === 'large' ? 'w-20 h-20' : size === 'medium' ? 'w-14 h-14' : 'w-10 h-10'}`}
+                  style={{ color: 'var(--coup-text-primary)' }}
+                  strokeWidth={1.5}
+                />
+              </div>
+
+              <div className="text-center mt-auto">
+                <div className={`${size === 'large' ? 'text-xl' : size === 'medium' ? 'text-lg' : 'text-base'} font-serif text-coup-text-primary uppercase tracking-widest leading-tight`}>
+                  {characterData.name}
+                </div>
+              </div>
           </div>
+
+          {revealed && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
+              <div className="transform rotate-12 bg-coup-accent-danger text-white px-4 py-1 font-serif text-sm border-2 border-white/20 shadow-xl">
+                REVEALED
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Revealed overlay */}
-        {revealed && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <div
-              className="transform rotate-12 px-4 py-2 rounded"
-              style={{
-                background: 'var(--coup-accent-danger)',
-                fontFamily: 'var(--font-serif)',
-                color: 'var(--coup-text-primary)',
-              }}
-            >
-              REVEALED
-            </div>
+        {/* Back Side (Card Back) */}
+        <div 
+          className="absolute inset-0 backface-hidden rounded-xl rotate-y-180 z-0"
+          style={{
+            background: 'var(--coup-card-back)',
+            border: '2px solid var(--coup-border)',
+            backgroundImage: 'radial-gradient(circle at center, rgba(212,169,75,0.05) 0%, transparent 70%)',
+          }}
+        >
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 grayscale opacity-30">
+             <div className="w-full h-full border-2 border-coup-primary/20 rounded-lg flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10 rotate-45 scale-150">
+                  <div className="w-full h-full grid grid-cols-4 grid-rows-4">
+                    {[...Array(16)].map((_, i) => (
+                       <div key={i} className="border border-coup-primary w-full h-full opacity-20" />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-coup-primary/40 font-serif tracking-[0.2em] uppercase text-xl rotate-90 whitespace-nowrap">
+                  COUP CARD
+                </div>
+             </div>
           </div>
-        )}
-      </div>
-    </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 }

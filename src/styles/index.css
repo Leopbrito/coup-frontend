@@ -8,6 +8,24 @@ body {
   color: var(--coup-text-primary);
   font-family: var(--font-sans);
   overflow-x: hidden;
+  
+  /* Mobile Nativo UX - Disable selection globally */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Allow selection in input/editable areas */
+input, 
+textarea, 
+[contenteditable="true"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Prevent image dragging */
+img {
+  -webkit-user-drag: none;
 }
 
 /* Smooth scrolling */
@@ -58,4 +76,22 @@ html {
 .scroll-fade::after {
   bottom: 0;
   background: linear-gradient(to top, #0D1016, transparent);
+}
+
+/* 3D Card Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }

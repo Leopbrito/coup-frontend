@@ -12,7 +12,7 @@ import { ExchangeModal } from '../components/modals/ExchangeModal';
 import { InvestigateModal } from '../components/modals/InvestigateModal';
 import { ActionType, CharacterType, GamePhase } from '../types/game';
 import { ACTIONS } from '../constants/game';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { ContentWrapper } from '../components/layout/ContentWrapper';
 import { Stack } from '../components/layout/Stack';
@@ -49,6 +49,10 @@ export function GameScreen() {
 
   const [selectedAction, setSelectedAction] = useState<ActionType | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+
+  // Privacy Mode States
+  const [isPeekingGlobal, setIsPeekingGlobal] = useState(false);
+  const [peekingCardIndex, setPeekingCardIndex] = useState<number | null>(null);
 
   const currentPlayer = players.find((p) => p.id === currentUserId);
   const isMyTurn = currentPlayerId === currentUserId;
@@ -297,35 +301,76 @@ export function GameScreen() {
 
           {/* Your Cards */}
           {currentPlayer && (
-            <Section withSurface={false} className="mb-4">
-              <div className="text-sm text-center text-coup-text-secondary font-sans mb-1">
+            <Section withSurface={false} className="mb-4 relative">
+              {/* Privacy Backdrop Blur Overlay (Moved here to stay behind cards but above board) */}
+              <AnimatePresence>
+                {(isPeekingGlobal || peekingCardIndex !== null) && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[50] bg-black/40 backdrop-blur-md pointer-events-none"
+                  />
+                )}
+              </AnimatePresence>
+
+              <div className="text-sm text-center text-coup-text-secondary font-sans mb-1 relative z-[60]">
                 Your Influences
               </div>
               <Stack direction="horizontal" justify="center" gap="md">
-                {currentPlayer.influences.map((influence, index) => (
-                  <motion.div
-                    key={index}
-                    animate={isRevealing && !influence.revealed ? { 
-                      scale: [1, 1.05, 1],
-                      boxShadow: [
-                        '0 0 0 rgba(185, 58, 58, 0)',
-                        '0 0 15px rgba(185, 58, 58, 0.4)',
-                        '0 0 0 rgba(185, 58, 58, 0)'
-                      ] 
-                    } : {}}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    <CharacterCard
-                      character={influence.character}
-                      revealed={influence.revealed}
-                      size="medium"
-                      onClick={isRevealing && !influence.revealed ? () => handleRevealCard(index) : undefined}
-                    />
-                  </motion.div>
-                ))}
+                {currentPlayer.influences.map((influence, index) => {
+                  const isVisibleForMe = isPeekingGlobal || peekingCardIndex === index;
+                  
+                  return (
+                    <motion.div
+                      key={index}
+                      className="relative z-[70]"
+                      onPointerDown={() => !influence.revealed && setPeekingCardIndex(index)}
+                      onPointerUp={() => setPeekingCardIndex(null)}
+                      onPointerLeave={() => setPeekingCardIndex(null)}
+                      animate={isRevealing && !influence.revealed ? { 
+                        scale: [1, 1.05, 1],
+                        boxShadow: [
+                          '0 0 0 rgba(185, 58, 58, 0)',
+                          '0 0 15px rgba(185, 58, 58, 0.4)',
+                          '0 0 0 rgba(185, 58, 58, 0)'
+                        ] 
+                      } : {}}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <CharacterCard
+                        character={influence.character}
+                        revealed={influence.revealed}
+                        faceDown={!isVisibleForMe}
+                        size="medium"
+                        onClick={isRevealing && !influence.revealed ? () => handleRevealCard(index) : undefined}
+                      />
+                      
+                      {/* Interaction hint for peeking */}
+                      {!influence.revealed && !isVisibleForMe && !isPeekingGlobal && (
+                        <div className="absolute inset-0 flex items-end justify-center pb-2 pointer-events-none opacity-0 hover:opacity-100 transition-opacity">
+                           <div className="bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] text-white/50 uppercase tracking-tighter">
+                              Hold to peek
+                           </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
               </Stack>
-              <div className="flex justify-center mt-2">
+              <div className="flex justify-center mt-4 relative">
                 <CoinCounter count={currentPlayer.coins} size="large" />
+                
+                {/* Global Peek Button */}
+                <button
+                   className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-coup-surface/80 border border-white/10 backdrop-blur-xl shadow-xl flex items-center justify-center text-coup-primary active:scale-90 transition-transform z-[100]"
+                   onPointerDown={() => setIsPeekingGlobal(true)}
+                   onPointerUp={() => setIsPeekingGlobal(false)}
+                   onPointerLeave={() => setIsPeekingGlobal(false)}
+                   aria-label="Peek Cards"
+                >
+                  {isPeekingGlobal ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+                </button>
               </div>
             </Section>
           )}
