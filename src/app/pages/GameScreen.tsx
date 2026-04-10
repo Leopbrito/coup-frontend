@@ -176,15 +176,15 @@ export function GameScreen() {
 
       <ContentWrapper>
         {/* Header */}
-        <Stack direction="horizontal" justify="between" align="center" className="py-4">
+        <Stack direction="horizontal" justify="between" align="center" className="py-4 short:py-2">
           <button
             onClick={() => navigate('/lobby')}
             className="p-2 rounded-xl text-coup-text-secondary/70 hover:bg-white/5 hover:text-coup-text-primary transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-6 h-6 short:w-5 short:h-5" />
           </button>
 
-          <Stack direction="horizontal" gap="sm" align="center" className="bg-black/20 backdrop-blur-md border border-white/5 px-4 py-2 rounded-xl shadow-inner">
+          <Stack direction="horizontal" gap="sm" align="center" className="bg-black/20 backdrop-blur-md border border-white/5 px-4 short:px-3 py-2 short:py-1.5 rounded-xl shadow-inner">
             <div className="text-xs uppercase tracking-wider text-coup-text-secondary/80 font-sans font-semibold">
               Treasury
             </div>
@@ -193,9 +193,9 @@ export function GameScreen() {
         </Stack>
 
         {/* Main Game Area */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${isMyTurn && !selectedAction ? 'pb-28' : 'pb-4'}`}>
+        <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${isMyTurn && !selectedAction ? 'pb-48 short:pb-40' : 'pb-4 short:pb-2'}`}>
           {/* Other Players */}
-          <Stack gap="sm" className="mb-4">
+          <Stack gap="sm" className="mb-4 short:mb-2 overflow-y-auto hide-scrollbar max-h-[30%] shrink-0">
           {players
             .filter((p) => p.id !== currentUserId)
             .map((player) => (
@@ -253,17 +253,18 @@ export function GameScreen() {
                       Choose an action to plot
                     </p>
                   </motion.div>
-                ) : (
+                 ) : (
                   <motion.div
                     key="their-turn"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
+                    className="flex flex-col items-center"
                   >
-                    <h2 className="text-2xl mb-2 font-serif text-coup-text-primary/70">
+                    <h2 className="text-2xl short:text-xl mb-2 short:mb-1 font-serif text-coup-text-primary/70">
                       <span className="text-white">{activePlayer?.username}'s</span> Turn
                     </h2>
-                    <p className="font-sans text-sm text-coup-text-secondary/50">
+                    <p className="font-sans text-sm short:text-xs text-coup-text-secondary/50">
                       Waiting for their move...
                     </p>
                   </motion.div>
@@ -275,24 +276,24 @@ export function GameScreen() {
                     key="reveal-instruction"
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="mt-8 p-6 rounded-2xl bg-coup-accent-danger/10 border border-coup-accent-danger/30 backdrop-blur-md"
+                    className="mt-8 short:mt-4 p-6 short:p-4 rounded-2xl bg-coup-accent-danger/10 border border-coup-accent-danger/30 backdrop-blur-md"
                   >
                     {isRevealing ? (
                       <>
-                        <h2 className="text-2xl mb-2 font-serif text-coup-accent-danger tracking-widest animate-pulse">
+                        <h2 className="text-2xl short:text-xl mb-2 short:mb-1 font-serif text-coup-accent-danger tracking-widest animate-pulse">
                           SACRIFICE REQUIRED
                         </h2>
-                        <p className="text-coup-text-primary font-sans text-sm">
+                        <p className="text-coup-text-primary font-sans text-sm short:text-xs">
                           Select one of your influences to lose
                         </p>
                       </>
                     ) : (
                       <>
-                        <h2 className="text-xl mb-1 font-serif text-coup-text-primary/80">
+                        <h2 className="text-xl short:text-lg mb-1 font-serif text-coup-text-primary/80">
                           Influence Theft
                         </h2>
-                        <p className="text-coup-text-secondary font-sans text-sm">
-                          {players.find(p => p.id === revealingPlayerId)?.username} is choosing a card to sacrifice...
+                        <p className="text-coup-text-secondary font-sans text-sm short:text-xs">
+                          {players.find(p => p.id === revealingPlayerId)?.username} is choosing...
                         </p>
                       </>
                     )}
@@ -338,7 +339,7 @@ export function GameScreen() {
 
           {/* Your Cards */}
           {currentPlayer && (
-            <Section withSurface={false} className="mb-4 relative">
+            <Section withSurface={false} className="mb-4 short:mb-1 relative shrink-0">
               {/* Privacy Backdrop Blur Overlay (Moved here to stay behind cards but above board) */}
               <AnimatePresence>
                 {(isPeekingGlobal || peekingCardIndex !== null) && (
@@ -351,7 +352,7 @@ export function GameScreen() {
                 )}
               </AnimatePresence>
 
-              <div className="text-sm text-center text-coup-text-secondary font-sans mb-1 relative z-[60]">
+              <div className="text-[10px] short:text-[8px] text-center text-coup-text-secondary uppercase tracking-widest mb-1 relative z-[60] opacity-50">
                 Your Influences
               </div>
               <Stack direction="horizontal" justify="center" gap="xl">

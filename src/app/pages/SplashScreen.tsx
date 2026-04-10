@@ -15,7 +15,7 @@ export function SplashScreen() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      className="h-dvh flex flex-col items-center justify-center relative overflow-hidden"
       style={{ background: 'var(--coup-bg)' }}
     >
       {/* Animated background particles */}

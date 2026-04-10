@@ -40,7 +40,7 @@ export function InitialDealScreen() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
+      className="h-dvh flex flex-col items-center justify-center p-6 relative overflow-hidden"
       style={{ background: 'var(--coup-bg)' }}
     >
       {/* Background */}
@@ -54,7 +54,7 @@ export function InitialDealScreen() {
       {/* Content */}
       <div className="relative z-10 text-center">
         <motion.h1
-          className="text-3xl mb-12"
+          className="text-3xl short:text-2xl mb-12 short:mb-4"
           style={{
             fontFamily: 'var(--font-serif)',
             color: 'var(--coup-text-primary)',
@@ -66,10 +66,11 @@ export function InitialDealScreen() {
         </motion.h1>
 
         {/* Cards */}
-        <div className="flex justify-center gap-6 mb-12">
+        <div className="flex justify-center gap-6 short:gap-4 mb-12 short:mb-4">
           {currentPlayer.influences.map((influence, index) => (
             <motion.div
               key={index}
+              className="short:scale-75 origin-center"
               initial={{ x: index === 0 ? -100 : 100, opacity: 0, rotateY: 180 }}
               animate={
                 showCards
@@ -107,14 +108,14 @@ export function InitialDealScreen() {
           >
             Starting Treasury
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-1 short:mt-0">
             <CoinCounter count={currentPlayer.coins} size="large" animate />
           </div>
         </motion.div>
 
         {/* Continue hint */}
         <motion.p
-          className="mt-12 text-sm"
+          className="mt-12 short:mt-4 text-xs opacity-50 font-sans tracking-widest uppercase"
           style={{
             color: 'var(--coup-text-secondary)',
             fontFamily: 'var(--font-sans)',

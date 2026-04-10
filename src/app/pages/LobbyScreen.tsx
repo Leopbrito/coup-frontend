@@ -78,9 +78,9 @@ export function LobbyScreen() {
         />
       </div>
 
-      <ContentWrapper className="py-6">
+      <ContentWrapper className="py-6 short:py-4">
         {/* Header */}
-        <Stack direction="horizontal" justify="between" align="center" className="mb-8">
+        <Stack direction="horizontal" justify="between" align="center" className="mb-8 short:mb-4">
           <div className="flex items-center">
             <button
               onClick={() => navigate('/home')}
@@ -111,14 +111,14 @@ export function LobbyScreen() {
         </Stack>
 
         {/* Content */}
-        <div className="relative z-10 flex-1 flex flex-col">
+        <div className="relative z-10 flex-1 flex flex-col min-h-0">
           {/* Players */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto hide-scrollbar pr-1 -mr-1">
             <h2 className="mb-4 font-sans tracking-wide uppercase text-sm font-semibold text-coup-text-primary/70">
               Players ({players.length}/6)
             </h2>
 
-            <Stack gap="md">
+            <Stack gap="md" className="short:gap-sm px-1 -mx-1">
               {players.map((player, index) => (
                 <motion.div
                   key={player.id}
@@ -149,7 +149,7 @@ export function LobbyScreen() {
           </div>
 
           {/* Actions */}
-          <Stack gap="sm" className="mt-6">
+          <Stack gap="sm" className="mt-6 short:mt-4">
             {/* Ready Button */}
             {!isHost && (
               <motion.button

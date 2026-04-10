@@ -35,7 +35,7 @@ export function HomeScreen() {
       <ContentWrapper className="justify-center py-6">
         {/* Logo */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-16 short:mb-8"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
@@ -52,11 +52,11 @@ export function HomeScreen() {
         </motion.div>
 
         {/* Menu */}
-        <Stack gap="md">
+        <Stack gap="md" className="short:gap-sm">
           {menuItems.map((item, index) => (
             <motion.button
               key={item.path}
-              className="w-full py-5 px-6 rounded-2xl flex items-center gap-5 relative overflow-hidden group bg-coup-surface/40 backdrop-blur-md border border-white/5 shadow-xl"
+              className="w-full py-5 px-6 short:py-3.5 rounded-2xl flex items-center gap-5 relative overflow-hidden group bg-coup-surface/40 backdrop-blur-md border border-white/5 shadow-xl"
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ type: "spring", stiffness: 400, damping: 25, delay: index * 0.1 }}

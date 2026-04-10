@@ -12,7 +12,7 @@ interface PageContainerProps {
 export function PageContainer({ children, className = '', withBackgroundDecoration = false }: PageContainerProps) {
   return (
     <div
-      className={`min-h-dvh flex flex-col relative overflow-hidden bg-coup-bg text-coup-text-primary p-4 sm:p-6 md:p-8 ${className}`}
+      className={`h-dvh max-h-dvh flex flex-col relative overflow-hidden bg-coup-bg text-coup-text-primary p-4 sm:p-6 md:p-8 ${className}`}
     >
       {IS_TEST_MODE && (
         <Link 

@@ -1,3 +1,4 @@
 @import 'tailwindcss';
+@variant short (@media (max-height: 700px));
 
 @import 'tw-animate-css';
