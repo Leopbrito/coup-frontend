@@ -1,7 +1,7 @@
+import { Anchor, Crown, Eye, Shield, Skull, Users } from 'lucide-react';
 import { motion } from 'motion/react';
-import { CharacterType } from '../../types/game';
 import { CHARACTERS } from '../../constants/game';
-import { Crown, Skull, Anchor, Users, Shield, Eye } from 'lucide-react';
+import { CharacterType } from '../../types/game';
 
 interface CharacterCardProps {
   character: CharacterType;
@@ -41,24 +41,26 @@ export function CharacterCard({
   const isActuallyFaceDown = faceDown && !revealed;
 
   return (
-    <div className={`${sizeClasses[size].split(' ')[0]} ${sizeClasses[size].split(' ')[1]} perspective-1000 ${className}`}>
+    <div 
+      className={`relative ${sizeClasses[size].split(' ')[0]} ${sizeClasses[size].split(' ')[1]} perspective-1000 ${className}`}
+    >
       <motion.div
-        className="w-full h-full relative preserve-3d"
+        className="w-full h-full relative preserve-3d cursor-pointer"
         initial={false}
         animate={{ rotateY: isActuallyFaceDown ? 180 : 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 25 }}
       >
         {/* Front Side (Face Up) */}
         <div 
-          className="absolute inset-0 backface-hidden rounded-xl overflow-hidden shadow-2xl z-10"
+          className="absolute inset-0 backface-hidden rounded-xl overflow-hidden z-10"
           style={{
             background: `linear-gradient(135deg, ${characterData.secondaryColor} 0%, ${characterData.color} 100%)`,
             border: `2px solid ${characterData.color}`,
-            boxShadow: revealed ? 'none' : `0 4px 25px ${characterData.color}60`,
           }}
         >
           {/* Card Content */}
-          <div className={`relative h-full p-4 flex flex-col ${revealed ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+          <div className={`relative h-full p-2.5 flex flex-col ${revealed ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
              <div className="absolute inset-0 opacity-10">
                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                   <pattern id={`pattern-${character}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -76,8 +78,17 @@ export function CharacterCard({
                 />
               </div>
 
-              <div className="text-center mt-auto">
-                <div className={`${size === 'large' ? 'text-xl' : size === 'medium' ? 'text-lg' : 'text-base'} font-serif text-coup-text-primary uppercase tracking-widest leading-tight`}>
+              <div className="text-center mt-auto w-full">
+                <div className={`
+                  font-serif text-coup-text-primary uppercase leading-tight text-center
+                  ${characterData.name.length > 9 ? 'tracking-normal text-sm' : 'tracking-wider'}
+                  ${size === 'large' 
+                    ? (characterData.name.length > 9 ? 'text-lg' : 'text-xl') 
+                    : size === 'medium' 
+                      ? (characterData.name.length > 9 ? 'text-base' : 'text-lg') 
+                      : (characterData.name.length > 9 ? 'text-[10px]' : 'text-xs')
+                  }
+                `}>
                   {characterData.name}
                 </div>
               </div>

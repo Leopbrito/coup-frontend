@@ -1,22 +1,22 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useGameStore } from '../store/gameStore';
 import { CharacterCard } from '../components/cards/CharacterCard';
-import { PlayerBadge } from '../components/players/PlayerBadge';
-import { CoinCounter } from '../components/ui/CoinCounter';
-import { BottomSheet } from '../components/ui/BottomSheet';
 import { ActionButton } from '../components/game/ActionButton';
+import { ContentWrapper } from '../components/layout/ContentWrapper';
+import { PageContainer } from '../components/layout/PageContainer';
+import { Section } from '../components/layout/Section';
+import { Stack } from '../components/layout/Stack';
 import { ChallengeModal } from '../components/modals/ChallengeModal';
 import { ExchangeModal } from '../components/modals/ExchangeModal';
 import { InvestigateModal } from '../components/modals/InvestigateModal';
-import { ActionType, CharacterType, GamePhase } from '../types/game';
+import { PlayerBadge } from '../components/players/PlayerBadge';
+import { BottomSheet } from '../components/ui/BottomSheet';
+import { CoinCounter } from '../components/ui/CoinCounter';
 import { ACTIONS } from '../constants/game';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { PageContainer } from '../components/layout/PageContainer';
-import { ContentWrapper } from '../components/layout/ContentWrapper';
-import { Stack } from '../components/layout/Stack';
-import { Section } from '../components/layout/Section';
+import { useGameStore } from '../store/gameStore';
+import { ActionType, CharacterType, GamePhase } from '../types/game';
 
 export function GameScreen() {
   const navigate = useNavigate();
@@ -50,9 +50,13 @@ export function GameScreen() {
   const [selectedAction, setSelectedAction] = useState<ActionType | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
 
-  // Privacy Mode States
   const [isPeekingGlobal, setIsPeekingGlobal] = useState(false);
   const [peekingCardIndex, setPeekingCardIndex] = useState<number | null>(null);
+  const [isPressing, setIsPressing] = useState<number | null>(null);
+  
+  // Refs for tap vs hold logic
+  const pressTimerRef = useRef<any>(null);
+  const isHoldRef = useRef(false);
 
   const currentPlayer = players.find((p) => p.id === currentUserId);
   const isMyTurn = currentPlayerId === currentUserId;
@@ -64,6 +68,39 @@ export function GameScreen() {
   const isRevealing = phase === GamePhase.REVEAL && revealingPlayerId === currentUserId;
   const isExchanging = phase === GamePhase.EXCHANGE && revealingPlayerId === currentUserId;
   const isInvestigating = phase === GamePhase.INVESTIGATE && revealingPlayerId === currentUserId;
+
+  // Interaction Handlers
+  const handleInfluencePointerDown = (index: number) => {
+    if (isHoldRef.current) return;
+    
+    setIsPressing(index);
+    isHoldRef.current = false;
+    
+    // Start hold timer
+    pressTimerRef.current = setTimeout(() => {
+      isHoldRef.current = true;
+      setPeekingCardIndex(index);
+    }, 250); // Threshold for hold
+  };
+
+  const handleInfluencePointerUp = (index: number, influence: any) => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+
+    setIsPressing(null);
+
+    // If it wasn't a hold, it's a tap
+    if (!isHoldRef.current) {
+      if (isRevealing && !influence.revealed) {
+        handleRevealCard(index);
+      }
+    }
+
+    setPeekingCardIndex(null);
+    isHoldRef.current = false;
+  };
 
   const availableActions = Object.values(ActionType).filter((action) => {
     const actionData = ACTIONS[action];
@@ -317,7 +354,7 @@ export function GameScreen() {
               <div className="text-sm text-center text-coup-text-secondary font-sans mb-1 relative z-[60]">
                 Your Influences
               </div>
-              <Stack direction="horizontal" justify="center" gap="md">
+              <Stack direction="horizontal" justify="center" gap="xl">
                 {currentPlayer.influences.map((influence, index) => {
                   const isVisibleForMe = isPeekingGlobal || peekingCardIndex === index;
                   
@@ -325,25 +362,24 @@ export function GameScreen() {
                     <motion.div
                       key={index}
                       className="relative z-[70]"
-                      onPointerDown={() => !influence.revealed && setPeekingCardIndex(index)}
-                      onPointerUp={() => setPeekingCardIndex(null)}
-                      onPointerLeave={() => setPeekingCardIndex(null)}
-                      animate={isRevealing && !influence.revealed ? { 
+                      onPointerDown={() => !influence.revealed && handleInfluencePointerDown(index)}
+                      onPointerUp={() => handleInfluencePointerUp(index, influence)}
+                      onPointerLeave={() => {
+                        if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+                        setPeekingCardIndex(null);
+                        setIsPressing(null);
+                        isHoldRef.current = false;
+                      }}
+                      animate={isRevealing && !influence.revealed && isPressing === null ? { 
                         scale: [1, 1.05, 1],
-                        boxShadow: [
-                          '0 0 0 rgba(185, 58, 58, 0)',
-                          '0 0 15px rgba(185, 58, 58, 0.4)',
-                          '0 0 0 rgba(185, 58, 58, 0)'
-                        ] 
                       } : {}}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
                       <CharacterCard
                         character={influence.character}
                         revealed={influence.revealed}
                         faceDown={!isVisibleForMe}
                         size="medium"
-                        onClick={isRevealing && !influence.revealed ? () => handleRevealCard(index) : undefined}
                       />
                       
                       {/* Interaction hint for peeking */}

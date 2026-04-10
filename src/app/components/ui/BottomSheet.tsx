@@ -71,7 +71,7 @@ export function BottomSheet({ isVisible, children, headerTitle = "Actions", head
             initial={{ opacity: 0 }}
             style={{ opacity: backdropOpacity }}
             onClick={() => isExpanded && toggleExpand()}
-            className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm ${isExpanded ? 'pointer-events-auto' : 'pointer-events-none'}`}
+            className={`fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm ${isExpanded ? 'pointer-events-auto' : 'pointer-events-none'}`}
           />
 
           {/* O Drawer Em Si */}
@@ -84,7 +84,7 @@ export function BottomSheet({ isVisible, children, headerTitle = "Actions", head
             initial={{ y: '100%', opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.3 } }}
             exit={{ y: '100%', opacity: 0, transition: { duration: 0.3 } }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col h-[75vh] will-change-transform"
+            className="fixed bottom-0 left-0 right-0 z-[100] flex flex-col h-[75vh] will-change-transform"
           >
             {/* Handle & Header (Touchable Area) */}
             <div 
