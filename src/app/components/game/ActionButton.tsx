@@ -1,7 +1,7 @@
-import { motion } from 'motion/react';
-import { ActionType, CharacterType } from '../../types/game';
-import { ACTIONS, CHARACTERS } from '../../constants/game';
 import { Coins } from 'lucide-react';
+import { motion, useAnimation } from 'motion/react';
+import { ACTIONS, CHARACTERS } from '../../constants/game';
+import { ActionType } from '../../types/game';
 
 interface ActionButtonProps {
   action: ActionType;
@@ -13,6 +13,23 @@ interface ActionButtonProps {
 export function ActionButton({ action, disabled = false, onClick, className = '' }: ActionButtonProps) {
   const actionData = ACTIONS[action];
   const characterData = actionData.requiredCharacter ? CHARACTERS[actionData.requiredCharacter] : null;
+  const controls = useAnimation();
+
+  const handlePress = () => {
+    if (!disabled) {
+      controls.start({ scale: 0.96, transition: { duration: 0.1 } });
+    }
+  };
+
+  const handleRelease = () => {
+    controls.start({ scale: 1, y: 0, transition: { type: 'spring', stiffness: 500, damping: 30 } });
+  };
+
+  const handleHoverStart = () => {
+    if (!disabled) {
+      controls.start({ scale: 1.02, y: -2, transition: { duration: 0.2 } });
+    }
+  };
 
   return (
     <motion.button
@@ -31,8 +48,13 @@ export function ActionButton({ action, disabled = false, onClick, className = ''
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
-      whileHover={!disabled ? { scale: 1.02, y: -2 } : {}}
-      whileTap={!disabled ? { scale: 0.98 } : {}}
+      animate={controls}
+      initial={{ scale: 1, y: 0 }}
+      onPointerDown={handlePress}
+      onPointerUp={handleRelease}
+      onPointerCancel={handleRelease}
+      onPointerLeave={handleRelease}
+      onMouseEnter={handleHoverStart}
       onClick={!disabled ? onClick : undefined}
       disabled={disabled}
     >

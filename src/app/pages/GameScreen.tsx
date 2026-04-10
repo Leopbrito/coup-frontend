@@ -152,7 +152,7 @@ export function GameScreen() {
         </Stack>
 
         {/* Main Game Area */}
-        <div className="flex-1 flex flex-col pb-4">
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${isMyTurn && !selectedAction ? 'pb-28' : 'pb-4'}`}>
           {/* Other Players */}
           <Stack gap="sm" className="mb-4">
           {players

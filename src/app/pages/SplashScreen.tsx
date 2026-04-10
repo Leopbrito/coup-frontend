@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 export function SplashScreen() {
@@ -50,7 +50,7 @@ export function SplashScreen() {
         transition={{ duration: 1, type: 'spring' }}
       >
         <motion.h1
-          className="text-7xl mb-4"
+          className="text-7xl mb-4 text-center"
           style={{
             fontFamily: 'var(--font-serif)',
             color: 'var(--coup-text-primary)',
